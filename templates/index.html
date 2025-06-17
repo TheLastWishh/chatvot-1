@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Medical Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Medical Chatbot</h1>
+            <p>Hỗ trợ chẩn đoán sơ bộ dựa trên các triệu chứng</p>
+        </header>
+        
+        <main>
+            <div class="chat-container">
+                <div id="chat-box">
+                    <div class="message bot">
+                        Xin chào! Tôi là chatbot y tế AI. Tôi có thể giúp bạn chẩn đoán sơ bộ dựa trên các triệu chứng bạn đang gặp phải.
+                        <br>
+                        Bạn đã sẵn sàng chưa? Nếu sẵn sàng, hãy nhập OK để bắt đầu!
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="Nhập câu hỏi/trả lời của bạn...">
+                    <button id="send-btn">Gửi</button>
+                </div>
+                
+                <div class="controls">
+                    <button id="reset-btn">Bắt đầu lại</button>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2>Hướng dẫn sử dụng</h2>
+                <ol>
+                    <li>Nhập các triệu chứng bạn đang gặp phải</li>
+                    <li>Trả lời các câu hỏi thêm về triệu chứng (có/không)</li>
+                    <li>Nhận chẩn đoán sơ bộ và đưa ra thông tin về bệnh lý</li>
+                </ol>
+                
+                <div class="disclaimer">
+                    <h3>Lưu ý quan trọng</h3>
+                    <p>Đây chỉ là công cụ chẩn đoán sơ bộ và không thay thế cho tư vấn y tế chuyên nghiệp. Vui lòng tham khảo ý kiến của bác sĩ để được chẩn đoán và điều trị chính xác.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatBox = document.getElementById('chat-box');
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            
+            // Gửi tin nhắn
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // Hiển thị tin nhắn của người dùng
+                addMessage('user', message);
+                
+                // Xóa input
+                userInput.value = '';
+                
+                // Gửi request đến server
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hiển thị phản hồi từ bot
+                    addMessage('bot', data.response);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('bot', 'Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại sau.');
+                });
+            }
+            
+            // Thêm tin nhắn vào chat box
+            function addMessage(sender, message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', sender);
+                
+                // Xử lý định dạng tin nhắn (xuống dòng)
+                const formattedMessage = message.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = formattedMessage;
+                
+                chatBox.appendChild(messageDiv);
+                
+                // Cuộn xuống cuối chat box
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+            
+            // Reset cuộc trò chuyện
+            function resetChat() {
+                fetch('/reset', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Xóa tất cả tin nhắn
+                    chatBox.innerHTML = '';
+                    
+                    // Thêm tin nhắn chào mừng
+                    addMessage('bot', 'Xin chào! Tôi là chatbot y tế AI. Tôi có thể giúp bạn chẩn đoán sơ bộ dựa trên các triệu chứng bạn đang gặp phải. Vui lòng cho tôi biết các triệu chứng của bạn.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            
+            // Event listeners
+            sendBtn.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            resetBtn.addEventListener('click', resetChat);
+        });
+    </script>
+</body>
+</html>
